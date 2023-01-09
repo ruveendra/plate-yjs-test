@@ -1,19 +1,19 @@
 // Import React dependencies.
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 // Import Plate stuff
-import { Plate, withPlate } from '@udecode/plate'
+import { Plate, withPlate, createPlateEditor } from '@udecode/plate'
 // Import the Slate editor factory.
 import {createEditor, Editor, Descendant, Node, Transforms, Range} from 'slate'
 // Import the Slate components and React plugin.
 import {Slate, Editable, RenderLeafProps, ReactEditor} from 'slate-react'
 // Import the core Slate-Yjs binding
-import {
-  withCursors,
-  withYjs,
-  withYHistory,
-  slateNodesToInsertDelta,
-  YjsEditor
-} from '@slate-yjs/core'
+// import {
+//   withCursors,
+//   withYjs,
+//   withYHistory,
+//   slateNodesToInsertDelta,
+//   YjsEditor
+// } from '@slate-yjs/core'
 // Import Yjs
 import * as Y from 'yjs'
 // Import web socket stuff
@@ -23,6 +23,17 @@ import randomColor from 'randomcolor'
 // Local resources
 import { AutoScaling } from './AutoScaling'
 import { RemoteCursorOverlay } from './RemoteCursorOverlay'
+import { withHistory } from "slate-history";
+
+import {
+  SyncElement,
+  toSharedType,
+  useCursors,
+  withCursor,
+  withYjs,
+} from "slate-yjs";
+
+import { withReact } from "slate-react";
 
 //const WEBSOCKET_ENDPOINT = 'wss://dq-websocket-server.herokuapp.com'//'ws://localhost:1234' 
 const WEBSOCKET_ENDPOINT = "wss://yjs.atticus.pub" 
@@ -68,42 +79,56 @@ function App() {
 
   // Create the Yjs doc and fetch if it's available from the server
   const chapterId = "doc-slug-fallback";
-  const [sharedTypeContent, provider] = useMemo(() => {
+  // const [sharedTypeContent, provider] = useMemo(() => {
+  //   const doc = new Y.Doc();
+  //   const sharedTypeContent = doc.get('content', Y.XmlText) as Y.XmlText;
+  //   const provider = new WebsocketProvider(WEBSOCKET_ENDPOINT, chapterId, doc, {
+  //     connect: false,
+  //   });
+
+  //   return [sharedTypeContent, provider];
+  // }, []);
+
+  const [sharedType, provider] = useMemo(() => {
     const doc = new Y.Doc();
-    const sharedTypeContent = doc.get('content', Y.XmlText) as Y.XmlText;
+    const sharedType = doc.getArray<SyncElement>("content");
+    //const dbProvider = new IndexeddbPersistence(chapter._id, doc);
+   // console.log(YJS_ENDPOINT);
+    //console.log("aws io :", aws_io);
+    // const provider = new WebsocketProvider("ws://127.0.0.1:1234", chapter._id, doc, {
+    // const provider = new WebsocketProvider(YJS_ENDPOINT, chapter._id, doc, {
+    //   connect: false,
+    //   params :{
+    //     sessionId : sessionId,
+    //     userId:selectedSocialProfile.userId
+    //   }
+    // }
+    // );
     const provider = new WebsocketProvider(WEBSOCKET_ENDPOINT, chapterId, doc, {
       connect: false,
+      
     });
 
-    return [sharedTypeContent, provider];
+    return [sharedType, provider];
   }, []);
+
+
+
 
   // Setup the binding
   const editor = useMemo(() => {
-    const cursorData = {
-      color: color,
-      name: name,
-    };
-
-    return withPlate(
-      withYHistory(
-        withCursors(
-          withYjs(createEditor(), sharedTypeContent),
-          provider.awareness, {
-            data: cursorData,
-          }
-        )
+    const editor: any = withCursor(
+      withYjs(
+        withReact(withHistory(createPlateEditor())),
+        sharedType
       ),
-      {
-        disableCorePlugins: {
-          history: true
-        }
-      }
+      provider.awareness
     );
-  }, [provider.awareness, sharedTypeContent]);
+    return editor;
+  }, [sharedType, provider]);
 
   // Disconnect the binding on component unmount in order to free up resources
-  useEffect(() => () => YjsEditor.disconnect(editor), [editor]);
+  // useEffect(() => () => YjsEditor.disconnect(editor), [editor]);
   useEffect(() => {
     /*provider.on("status", ({ status }: { status: string }) => {
       setOnlineState(status === "connected");
@@ -115,21 +140,21 @@ function App() {
       name,
     });
 
-    provider.on("sync", (isSynced: boolean) => {
-      if (isSynced) {
-        if (sharedTypeContent.length === 0) {
-          const insertDelta = slateNodesToInsertDelta(initialValue);
-          sharedTypeContent.applyDelta(insertDelta);
-        }
-      }
-    });
+    // provider.on("sync", (isSynced: boolean) => {
+    //   if (isSynced) {
+    //     if (sharedTypeContent.length === 0) {
+    //       const insertDelta = slateNodesToInsertDelta(initialValue);
+    //       sharedTypeContent.applyDelta(insertDelta);
+    //     }
+    //   }
+    // });
 
     provider.connect();
 
     return () => {
       provider.disconnect();
     };
-  }, [color, sharedTypeContent, provider]);
+  }, [color, sharedType, provider]);
 
   const toolBarHeight = 50
   const documentWidth = 8.5 * 96
@@ -146,10 +171,10 @@ function App() {
     <Plate
       id="1"
       editor={editor}
-      value={value}
+      //value={value}
       onChange={setValue}
       editableProps={editableProps}
-      initialValue={initialValue}
+      //initialValue={initialValue}
       renderEditable={renderEditable}
     >
     </Plate>
