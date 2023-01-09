@@ -25,10 +25,11 @@ import { AutoScaling } from './AutoScaling'
 import { RemoteCursorOverlay } from './RemoteCursorOverlay'
 
 //const WEBSOCKET_ENDPOINT = 'wss://dq-websocket-server.herokuapp.com'//'ws://localhost:1234' 
+const WEBSOCKET_ENDPOINT = "wss://yjs.atticus.pub" 
 //wss://3z1qvnl8p2.execute-api.us-east-1.amazonaws.com/dev
 //const WEBSOCKET_ENDPOINT = 'wss://3z1qvnl8p2.execute-api.us-east-1.amazonaws.com/dev'
 //const WEBSOCKET_ENDPOINT = 'wss://ec2-52-192-72-131.ap-northeast-1.compute.amazonaws.com:8080'
-const WEBSOCKET_ENDPOINT = 'ws://18.234.131.37:8000'
+//const WEBSOCKET_ENDPOINT = 'wss://54.89.208.81'
 //const WEBSOCKET_ENDPOINT = 'ws://localhost:1234'
 //https://ec2-52-192-72-131.ap-northeast-1.compute.amazonaws.com/
 
@@ -70,7 +71,7 @@ function App() {
   const [sharedTypeContent, provider] = useMemo(() => {
     const doc = new Y.Doc();
     const sharedTypeContent = doc.get('content', Y.XmlText) as Y.XmlText;
-    const provider = new WebsocketProvider(WEBSOCKET_ENDPOINT+"", `?=${chapterId}&`, doc, {
+    const provider = new WebsocketProvider(WEBSOCKET_ENDPOINT, chapterId, doc, {
       connect: false,
     });
 
